@@ -1,7 +1,7 @@
-run-infra:
-	docker-compose up -d
+build:
+	docker-compose up -d --build
 
-stop-infra:
+down:
 	docker-compose down
 
 run-api:

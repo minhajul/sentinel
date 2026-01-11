@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"os"
@@ -19,6 +20,23 @@ import (
 func main() {
 	producer := kafka.NewProducer([]string{"kafka:29092"}, "audit-logs")
 	defer producer.Close()
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+
+		w.WriteHeader(http.StatusOK)
+
+		json.NewEncoder(w).Encode(map[string]string{
+			"status":  "success",
+			"data":    "Sentinel api is working.",
+			"version": "1.0.0",
+		})
+	})
 
 	http.HandleFunc("/events", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -53,7 +71,7 @@ func main() {
 
 	go func() {
 		log.Println("API listening on port 8080...")
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("Server error: %v", err)
 		}
 	}()
