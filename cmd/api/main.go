@@ -14,6 +14,7 @@ import (
 	"sentinel/internal/adapters/kafka"
 	"sentinel/internal/core/domain"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
@@ -21,30 +22,24 @@ func main() {
 	producer := kafka.NewProducer([]string{"kafka:29092"}, "audit-logs")
 	defer producer.Close()
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
+	r := chi.NewRouter()
 
+	// Root health endpoint
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-
 		w.WriteHeader(http.StatusOK)
 
-		json.NewEncoder(w).Encode(map[string]string{
+		_ = json.NewEncoder(w).Encode(map[string]string{
 			"status":  "success",
 			"data":    "Sentinel api is working.",
 			"version": "1.0.0",
 		})
 	})
 
-	http.HandleFunc("/events", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-
+	// Audit event ingestion endpoint
+	r.Post("/events", func(w http.ResponseWriter, r *http.Request) {
 		var req domain.AuditEvent
+
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			return
@@ -62,12 +57,17 @@ func main() {
 			return
 		}
 
-		// Return 202 Accepted (Standard for async processing)
 		w.WriteHeader(http.StatusAccepted)
-		json.NewEncoder(w).Encode(map[string]string{"status": "queued", "event_id": req.EventID.String()})
+		_ = json.NewEncoder(w).Encode(map[string]string{
+			"status":   "queued",
+			"event_id": req.EventID.String(),
+		})
 	})
 
-	server := &http.Server{Addr: ":8080"}
+	server := &http.Server{
+		Addr:    ":8080",
+		Handler: r,
+	}
 
 	go func() {
 		log.Println("API listening on port 8080...")
@@ -83,5 +83,5 @@ func main() {
 	log.Println("Shutting down API...")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	server.Shutdown(ctx)
+	_ = server.Shutdown(ctx)
 }
