@@ -15,6 +15,7 @@ import (
 	"sentinel/internal/core/domain"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
 )
 
@@ -22,10 +23,16 @@ func main() {
 	producer := kafka.NewProducer([]string{"kafka:29092"}, "audit-logs")
 	defer producer.Close()
 
-	r := chi.NewRouter()
+	routing := chi.NewRouter()
+
+	routing.Use(middleware.RequestID)
+	routing.Use(middleware.RealIP)
+	routing.Use(middleware.Logger)
+	routing.Use(middleware.Recoverer)
+	routing.Use(middleware.Timeout(60 * time.Second))
 
 	// Root health endpoint
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+	routing.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 
@@ -37,7 +44,7 @@ func main() {
 	})
 
 	// Audit event ingestion endpoint
-	r.Post("/events", func(w http.ResponseWriter, r *http.Request) {
+	routing.Post("/events", func(w http.ResponseWriter, r *http.Request) {
 		var req domain.AuditEvent
 
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -66,7 +73,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:    ":8080",
-		Handler: r,
+		Handler: routing,
 	}
 
 	go func() {
