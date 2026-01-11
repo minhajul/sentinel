@@ -4,7 +4,7 @@
 
 It ingests structured business events via a REST API, buffers them through a Kafka stream to handle backpressure, and persists them into a partitioned PostgreSQL database for efficient historical querying.
 
-### 🚀 Key Features
+### Key Features
 
 * **Asynchronous Ingestion:** Fire-and-forget API design (`202 Accepted`) ensures the logging system never blocks the main application.
 * **Backpressure Handling:** Uses **Kafka** to decouple producers from consumers, allowing the system to absorb massive traffic spikes without data loss.
@@ -34,7 +34,7 @@ git clone https://github.com/minhajul/sentinel.git
 cd sentinel
 
 # Start Kafka, Zookeeper, Postgres, API, and Consumer
-make run-infra
+make build
 # OR
 docker-compose up -d --build
 ```
