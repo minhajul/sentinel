@@ -1,30 +1,26 @@
-version: '3.8'
-
 services:
-  # --- Database ---
   postgres:
     image: postgres:15-alpine
-    container_name: audit_postgres
+    container_name: sentinel_postgres
     ports:
       - "5432:5432"
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: audit_db
+      POSTGRES_DB: sentinel_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  # --- Streaming Platform ---
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
-    container_name: audit_zookeeper
+    container_name: sentinel_zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
 
   kafka:
     image: confluentinc/cp-kafka:7.4.0
-    container_name: audit_kafka
+    container_name: sentinel_kafka
     depends_on:
       - zookeeper
     ports:
@@ -35,7 +31,33 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"  # Ensure this is on
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  sentinel-api:
+    build: .
+    container_name: sentinel_api
+    command: [ "api" ]  # Runs /usr/local/bin/api
+    ports:
+      - "8080:8080"
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_BROKERS: kafka:29092
+      DB_DSN: postgres://user:password@postgres:5432/sentinel_db?sslmode=disable
+
+  sentinel-consumer:
+    build: .
+    container_name: sentinel_consumer
+    command: [ "consumer" ] # Runs /usr/local/bin/consumer
+    depends_on:
+      - kafka
+      - postgres
+    environment:
+      KAFKA_BROKERS: kafka:29092
+      KAFKA_TOPIC: audit-logs
+      KAFKA_GROUP_ID: audit-group-1
+      DB_DSN: postgres://user:password@postgres:5432/sentinel_db?sslmode=disable
 
 volumes:
   postgres_data:

@@ -1,1 +1,42 @@
 package main
+
+import (
+	"context"
+	"log"
+	"os"
+	"os/signal"
+	"sentinel/configs"
+	postgres "sentinel/internal/adapters/postgresql"
+	"syscall"
+
+	"sentinel/internal/adapters/kafka"
+	"sentinel/internal/core/domain"
+)
+
+func main() {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	cfg := configs.LoadConfig()
+
+	dbConn, err := postgres.NewConnection(cfg.DatabaseURL)
+	if err != nil {
+		log.Fatalf("Could not connect to DB: %v", err)
+	}
+	defer dbConn.Close()
+
+	repo := postgres.NewRepository(dbConn)
+
+	consumer := kafka.NewConsumer(cfg.KafkaBrokers, cfg.KafkaTopic, cfg.KafkaGroupID)
+	defer consumer.Close()
+
+	eventHandler := func(ctx context.Context, event domain.AuditEvent) error {
+		log.Printf("Saving event %s to DB...", event.EventID)
+		return repo.Save(ctx, event)
+	}
+	
+	log.Println("Consumer starting...")
+	if err := consumer.Start(ctx, eventHandler); err != nil {
+		log.Fatalf("Consumer failed: %v", err)
+	}
+}

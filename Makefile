@@ -10,5 +10,9 @@ run-api:
 run-consumer:
 	go run cmd/consumer/main.go
 
+PWD=$(shell pwd)
+
 migrate-up:
-	migrate -path migrations -database "postgresql://user:password@localhost:5432/audit_db?sslmode=disable" up
+	docker run --rm -v $(PWD)/migrations:/migrations --network host migrate/migrate \
+    		-path=/migrations/ \
+    		-database "postgresql://user:password@localhost:5432/sentinel_db?sslmode=disable" up
