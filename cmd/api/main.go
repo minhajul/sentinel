@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sentinel/configs"
 	"syscall"
 	"time"
 
@@ -20,7 +21,9 @@ import (
 )
 
 func main() {
-	producer := kafka.NewProducer([]string{"kafka:29092"}, "audit-logs")
+	config := configs.LoadConfig()
+
+	producer := kafka.NewProducer(config.KafkaBrokers, "audit-logs")
 	defer producer.Close()
 
 	routing := chi.NewRouter()
