@@ -21,9 +21,9 @@ import (
 )
 
 func main() {
-	config := configs.LoadConfig()
+	cfg := configs.LoadConfig()
 
-	producer := kafka.NewProducer(config.KafkaBrokers, "audit-logs")
+	producer := kafka.NewProducer(cfg.KafkaBrokers, "audit-logs")
 	defer producer.Close()
 
 	routing := chi.NewRouter()
