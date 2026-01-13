@@ -33,7 +33,9 @@ cd sentinel
 
 # Start Kafka, Zookeeper, Postgres, API, and Consumer
 make build
+
 # OR
+
 docker-compose up -d --build
 ```
 
