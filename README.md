@@ -42,11 +42,15 @@ docker-compose up -d --build
 The database needs the initial schema and partitions created.
 
 ```bash
+# Add table and prevent modification
+make migrate
+
+# OR
+
 # Connect to the running Postgres container
 docker exec -it sentinel_postgres psql -U user -d sentinel_db
 
-# Paste the contents of /migrations/000001_init_schema.up.sql
-# (Or use a migration tool if configured)
+# Paste the contents of /migrations
 ```
 
 ### Test the Pipeline
