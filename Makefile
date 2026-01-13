@@ -12,7 +12,7 @@ run-consumer:
 
 PWD=$(shell pwd)
 
-migrate-up:
+migrate:
 	docker run --rm -v $(PWD)/migrations:/migrations --network host migrate/migrate \
     		-path=/migrations/ \
     		-database "postgresql://user:password@localhost:5432/sentinel_db?sslmode=disable" up
