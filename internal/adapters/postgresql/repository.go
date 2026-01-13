@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sentinel/internal/core/domain"
+	"time"
 
 	_ "github.com/lib/pq"
 )
@@ -90,4 +91,20 @@ func (r *Repository) FindByChange(ctx context.Context, key, value string) ([]dom
 	}
 
 	return events, nil
+}
+
+func (r *Repository) EnsurePartitionExists(ctx context.Context, t time.Time) error {
+	partitionName := fmt.Sprintf("audit_logs_%s", t.Format("2006_01"))
+
+	start := time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, time.UTC)
+	end := start.AddDate(0, 1, 0) // First day of next month
+
+	query := fmt.Sprintf(`
+        CREATE TABLE IF NOT EXISTS %s 
+        PARTITION OF audit_logs 
+        FOR VALUES FROM ('%s') TO ('%s');
+    `, partitionName, start.Format("2006-01-02"), end.Format("2006-01-02"))
+
+	_, err := r.db.ExecContext(ctx, query)
+	return err
 }

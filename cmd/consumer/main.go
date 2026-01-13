@@ -8,6 +8,7 @@ import (
 	"sentinel/configs"
 	postgres "sentinel/internal/adapters/postgresql"
 	"syscall"
+	"time"
 
 	"sentinel/internal/adapters/kafka"
 	"sentinel/internal/core/domain"
@@ -27,6 +28,12 @@ func main() {
 
 	repo := postgres.NewRepository(dbConn)
 
+	now := time.Now()
+	nextMonth := now.AddDate(0, 1, 0)
+
+	_ = repo.EnsurePartitionExists(ctx, now)
+	_ = repo.EnsurePartitionExists(ctx, nextMonth)
+
 	consumer := kafka.NewConsumer(cfg.KafkaBrokers, cfg.KafkaTopic, cfg.KafkaGroupID)
 	defer consumer.Close()
 
@@ -34,7 +41,7 @@ func main() {
 		log.Printf("Saving event %s to DB...", event.EventID)
 		return repo.Save(ctx, event)
 	}
-	
+
 	log.Println("Consumer starting...")
 	if err := consumer.Start(ctx, eventHandler); err != nil {
 		log.Fatalf("Consumer failed: %v", err)
