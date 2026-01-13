@@ -20,14 +20,12 @@ It ingests structured business events via a REST API, buffers them through a Kaf
 * **Infrastructure:** Docker & Docker Compose
 * **Libraries:** `segmentio/kafka-go`, `lib/pq` (Pure Go drivers)
 
-### Quick Start
-
 ### Prerequisites
 
 * Docker & Docker Compose
 * Make (optional, but recommended)
 
-#### Clone & Spin Up
+### Clone and Spin Up
 
 ```bash
 git clone https://github.com/minhajul/sentinel.git
@@ -39,7 +37,7 @@ make build
 docker-compose up -d --build
 ```
 
-#### Initialize Database
+### Initialize Database
 
 The database needs the initial schema and partitions created.
 
@@ -51,7 +49,7 @@ docker exec -it sentinel_postgres psql -U user -d sentinel_db
 # (Or use a migration tool if configured)
 ```
 
-#### Test the Pipeline
+### Test the Pipeline
 
 **Send an Event (Producer):**
 
@@ -68,38 +66,11 @@ curl -X POST http://localhost:8080/events \
   }'
 ```
 
-**Verify Storage (Consumer -> DB):**
+**Verify Storage (Consumer `->` DB):**
 Check the logs to see the Consumer picking it up:
 
 ```bash
 docker logs -f sentinel_consumer
-```
-
-Query the Database:
-
-```sql
-SELECT * FROM audit_logs WHERE actor_id = 'user_123';
-```
-
-### Project Structure
-
-This project follows the **Standard Go Project Layout** and **Ports & Adapters (Hexagonal)** pattern.
-
-```text
-sentinel/
-├── cmd/
-│   ├── api/          # HTTP Server (Producer) entry point
-│   └── consumer/     # Kafka Worker (Consumer) entry point
-├── internal/
-│   ├── core/
-│   │   ├── domain/   # Business entities (Pure Go, no tags)
-│   │   └── ports/    # Interfaces (Repository/Service definitions)
-│   └── adapters/     # Implementation details
-│       ├── http/     # REST handlers
-│       ├── kafka/    # Kafka Producer/Consumer implementation
-│       └── postgres/ # DB repository with Partition logic
-├── migrations/       # SQL scripts for Schema & Partitioning
-└── docker-compose.yml
 ```
 
 ### Engineering Decisions (Why I did this?)
