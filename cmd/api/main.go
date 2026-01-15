@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"sentinel/configs"
+	postgres "sentinel/internal/adapters/postgresql"
 	"syscall"
 	"time"
 
@@ -25,6 +26,10 @@ func main() {
 
 	producer := kafka.NewProducer(cfg.KafkaBrokers, "audit-logs")
 	defer producer.Close()
+
+	if err := postgres.InitDB(cfg.DatabaseURL); err != nil {
+		log.Fatal(err)
+	}
 
 	routing := chi.NewRouter()
 

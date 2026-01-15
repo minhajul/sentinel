@@ -19,7 +19,7 @@ func main() {
 	defer stop()
 
 	cfg := configs.LoadConfig()
-
+	
 	repo, _ := postgres.NewRepository(cfg.DatabaseURL)
 
 	now := time.Now()
