@@ -27,7 +27,7 @@ func main() {
 	producer := kafka.NewProducer(cfg.KafkaBrokers, "audit-logs")
 	defer producer.Close()
 
-	if err := postgres.InitDB(cfg.DatabaseURL); err != nil {
+	if err, _ := postgres.NewConnection(cfg.DatabaseURL); err != nil {
 		log.Fatal(err)
 	}
 

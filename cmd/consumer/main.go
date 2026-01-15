@@ -19,14 +19,23 @@ func main() {
 	defer stop()
 
 	cfg := configs.LoadConfig()
-	
-	repo, _ := postgres.NewRepository(cfg.DatabaseURL)
+
+	repo, err := postgres.NewRepository(cfg.DatabaseURL)
+	if err != nil {
+		log.Fatalf("Could not connect to DB: %v", err)
+	}
+
+	defer repo.Close()
 
 	now := time.Now()
 	nextMonth := now.AddDate(0, 1, 0)
 
-	_ = repo.EnsurePartitionExists(ctx, now)
-	_ = repo.EnsurePartitionExists(ctx, nextMonth)
+	if err := repo.EnsurePartitionExists(ctx, now); err != nil {
+		log.Printf("Warning: Failed to ensure current partition: %v", err)
+	}
+	if err := repo.EnsurePartitionExists(ctx, nextMonth); err != nil {
+		log.Printf("Warning: Failed to ensure next partition: %v", err)
+	}
 
 	consumer := kafka.NewConsumer(cfg.KafkaBrokers, cfg.KafkaTopic, cfg.KafkaGroupID)
 	defer consumer.Close()
