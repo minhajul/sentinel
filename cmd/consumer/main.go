@@ -20,12 +20,6 @@ func main() {
 
 	cfg := configs.LoadConfig()
 
-	//dbConn, err := postgres.NewConnection(cfg.DatabaseURL)
-	//if err != nil {
-	//	log.Fatalf("Could not connect to DB: %v", err)
-	//}
-	//defer dbConn.Close()
-
 	repo, _ := postgres.NewRepository(cfg.DatabaseURL)
 
 	now := time.Now()
