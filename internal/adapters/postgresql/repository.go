@@ -15,10 +15,23 @@ type Repository struct {
 	db *sql.DB
 }
 
-func NewRepository(db *sql.DB) *Repository {
+func NewRepository(dsn string) (*Repository, error) {
+	db, err := sql.Open("postgres", dsn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open db: %w", err)
+	}
+
+	if err := db.Ping(); err != nil {
+		return nil, fmt.Errorf("failed to ping db: %w", err)
+	}
+
 	return &Repository{
 		db: db,
-	}
+	}, nil
+}
+
+func (r *Repository) Close() error {
+	return r.db.Close()
 }
 
 func (r *Repository) Save(ctx context.Context, event domain.AuditEvent) error {

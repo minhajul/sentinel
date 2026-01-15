@@ -20,13 +20,13 @@ func main() {
 
 	cfg := configs.LoadConfig()
 
-	dbConn, err := postgres.NewConnection(cfg.DatabaseURL)
-	if err != nil {
-		log.Fatalf("Could not connect to DB: %v", err)
-	}
-	defer dbConn.Close()
+	//dbConn, err := postgres.NewConnection(cfg.DatabaseURL)
+	//if err != nil {
+	//	log.Fatalf("Could not connect to DB: %v", err)
+	//}
+	//defer dbConn.Close()
 
-	repo := postgres.NewRepository(dbConn)
+	repo, _ := postgres.NewRepository(cfg.DatabaseURL)
 
 	now := time.Now()
 	nextMonth := now.AddDate(0, 1, 0)
