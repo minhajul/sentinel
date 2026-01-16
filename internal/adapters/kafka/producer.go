@@ -45,6 +45,16 @@ func (p *Producer) Publish(ctx context.Context, event domain.AuditEvent) error {
 	return nil
 }
 
+func (p *Producer) Ping(ctx context.Context) error {
+	client := &kafka.Client{
+		Addr: p.writer.Addr,
+	}
+	_, err := client.Metadata(ctx, &kafka.MetadataRequest{
+		Topics: []string{p.writer.Topic},
+	})
+	return err
+}
+
 func (p *Producer) Close() error {
 	return p.writer.Close()
 }

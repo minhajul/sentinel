@@ -27,9 +27,11 @@ func main() {
 	producer := kafka.NewProducer(cfg.KafkaBrokers, "audit-logs")
 	defer producer.Close()
 
-	if err, _ := postgres.NewConnection(cfg.DatabaseURL); err != nil {
+	db, err := postgres.NewConnection(cfg.DatabaseURL)
+	if err != nil {
 		log.Fatal(err)
 	}
+	defer db.Close()
 
 	routing := chi.NewRouter()
 
@@ -45,9 +47,41 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 
 		_ = json.NewEncoder(w).Encode(map[string]string{
-			"status":  "success",
+			"status":  "UP",
 			"data":    "Sentinel api is working.",
 			"version": "1.0.0",
+		})
+	})
+
+	// Readiness probe endpoint
+	routing.Get("/health/ready", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		defer cancel()
+
+		var dbStatus = "UP"
+		if err := db.PingContext(ctx); err != nil {
+			dbStatus = "DOWN"
+		}
+
+		var kafkaStatus = "UP"
+		if err := producer.Ping(ctx); err != nil {
+			kafkaStatus = "DOWN"
+		}
+
+		status := http.StatusOK
+		if dbStatus == "DOWN" || kafkaStatus == "DOWN" {
+			status = http.StatusServiceUnavailable
+		}
+
+		w.WriteHeader(status)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"status": "UP",
+			"checks": map[string]string{
+				"postgres": dbStatus,
+				"kafka":    kafkaStatus,
+			},
 		})
 	})
 

@@ -7,6 +7,7 @@ import (
 
 type EventProducer interface {
 	Publish(ctx context.Context, event domain.AuditEvent) error
+	Ping(ctx context.Context) error
 	Close() error
 }
 
