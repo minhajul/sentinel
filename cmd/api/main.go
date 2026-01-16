@@ -45,7 +45,7 @@ func main() {
 	eventsLimiter := middlewares.RateLimit(100, 1*time.Minute)
 
 	// Root health endpoint
-	routing.With(eventsLimiter).Get("/", func(w http.ResponseWriter, r *http.Request) {
+	routing.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 
