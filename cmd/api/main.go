@@ -9,12 +9,13 @@ import (
 	"os"
 	"os/signal"
 	"sentinel/configs"
-	postgres "sentinel/internal/adapters/postgresql"
 	"syscall"
 	"time"
 
 	"sentinel/internal/adapters/kafka"
+	postgres "sentinel/internal/adapters/postgresql"
 	"sentinel/internal/core/domain"
+	"sentinel/internal/core/middlewares"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -41,8 +42,10 @@ func main() {
 	routing.Use(middleware.Recoverer)
 	routing.Use(middleware.Timeout(60 * time.Second))
 
+	eventsLimiter := middlewares.RateLimit(100, 1*time.Minute)
+
 	// Root health endpoint
-	routing.Get("/", func(w http.ResponseWriter, r *http.Request) {
+	routing.With(eventsLimiter).Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 
@@ -86,7 +89,7 @@ func main() {
 	})
 
 	// Audit event ingestion endpoint
-	routing.Post("/events", func(w http.ResponseWriter, r *http.Request) {
+	routing.With(eventsLimiter).Post("/events", func(w http.ResponseWriter, r *http.Request) {
 		var req domain.AuditEvent
 
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
