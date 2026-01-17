@@ -97,12 +97,6 @@ Audit logs grow indefinitely. Indexing a table with 100M+ rows degrades write an
 
 Audit logs vary wildly in structure. An `invoice` change has different fields than a `user_profile` change. A rigid SQL schema would require hundreds of nullable columns or EAV (Entity-Attribute-Value) which is slow. PostgreSQL `JSONB` with **GIN Indexing** gives us the flexibility of NoSQL (MongoDB-like) with the ACID compliance of a relational DB.
 
-### Future Roadmap
-
-* [ ] **S3 Archival Worker:** Automatic job to move partitions older than 3 months to AWS S3 (Parquet format) and drop them from Postgres.
-* [ ] **gRPC Support:** Adding a gRPC port to the API for lower latency internal communication.
-* [ ] **Auth Middleware:** JWT validation for the API.
-
 ### License
 
 MIT
