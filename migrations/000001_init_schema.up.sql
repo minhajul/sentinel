@@ -1,4 +1,3 @@
--- Create the parent table
 CREATE TABLE audit_logs
 (
     event_id      UUID         NOT NULL,
@@ -17,10 +16,5 @@ CREATE INDEX idx_audit_changes ON audit_logs USING GIN (changes);
 
 -- Create initial partitions (e.g., for current month and next)
 CREATE TABLE audit_logs_2026_01 PARTITION OF audit_logs
-    FOR VALUES FROM
-(
-    '2026-01-01'
-) TO
-(
-    '2026-01-31'
-);
+FOR VALUES FROM
+('2026-01-01') TO ('2026-01-31');
