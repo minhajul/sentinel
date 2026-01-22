@@ -1,16 +1,25 @@
 ## Sentinel: Scalable Distributed Audit Log Service
 
-**Sentinel** is a high-throughput, append-only event sourcing system designed to provide compliance, traceability, and "time-travel" debugging capabilities for enterprise microservices.
+**Sentinel** is a high-throughput, append-only event sourcing system designed to provide compliance, traceability, and "
+time-travel" debugging capabilities for enterprise microservices.
 
-It ingests structured business events via a REST API, buffers them through a Kafka stream to handle backpressure, and persists them into a partitioned PostgreSQL database for efficient historical querying.
+It ingests structured business events via a REST API, buffers them through a Kafka stream to handle backpressure, and
+persists them into a partitioned PostgreSQL database for efficient historical querying.
+
+---
 
 ### Key Features
 
-* **Asynchronous Ingestion:** Fire-and-forget API design (`202 Accepted`) ensures the logging system never blocks the main application.
-* **Backpressure Handling:** Uses **Kafka** to decouple producers from consumers, allowing the system to absorb massive traffic spikes without data loss.
-* **Database Partitioning:** PostgreSQL tables are partitioned by month. This allows for efficient querying of recent data and O(1) archival/deletion of old data (dropping partitions vs. expensive `DELETE` rows).
-* **JSONB Indexing:** specific changes (`before`/`after` states) are stored in `JSONB` columns with GIN indexing, allowing for deep queries like "Who changed the *status* field to *failed*?".
-* **Hexagonal Architecture:** The codebase strictly separates business logic (Domain) from infrastructure (Adapters), making it highly testable and maintainable.
+* **Asynchronous Ingestion:** Fire-and-forget API design (`202 Accepted`) ensures the logging system never blocks the
+  main application.
+* **Backpressure Handling:** Uses **Kafka** to decouple producers from consumers, allowing the system to absorb massive
+  traffic spikes without data loss.
+* **Database Partitioning:** PostgreSQL tables are partitioned by month. This allows for efficient querying of recent
+  data and O(1) archival/deletion of old data (dropping partitions vs. expensive `DELETE` rows).
+* **JSONB Indexing:** specific changes (`before`/`after` states) are stored in `JSONB` columns with GIN indexing,
+  allowing for deep queries like "Who changed the *status* field to *failed*?".
+* **Hexagonal Architecture:** The codebase strictly separates business logic (Domain) from infrastructure (Adapters),
+  making it highly testable and maintainable.
 
 ### Tech Stack
 
@@ -83,19 +92,25 @@ docker logs -f sentinel_consumer
 
 #### Why Kafka instead of direct DB writes?
 
-Direct writes couple the availability of the logging service to the database. If the DB slows down under load, the main application hangs. By using Kafka, we introduce a buffer. The API accepts the request instantly (`202 Accepted`) and offloads the heavy write operation to a background worker. This provides **resilience** and **load smoothing**.
+Direct writes couple the availability of the logging service to the database. If the DB slows down under load, the main
+application hangs. By using Kafka, we introduce a buffer. The API accepts the request instantly (`202 Accepted`) and
+offloads the heavy write operation to a background worker. This provides **resilience** and **load smoothing**.
 
 #### Why Table Partitioning?
 
-Audit logs grow indefinitely. Indexing a table with 100M+ rows degrades write and read performance. By partitioning by **Month**:
+Audit logs grow indefinitely. Indexing a table with 100M+ rows degrades write and read performance. By partitioning by *
+*Month**:
 
 * **Writes** go to a smaller, hot table (e.g., `audit_logs_2024_01`).
 * **Reads** for recent data are faster.
-* **Archival** becomes a metadata operation (Detach Partition) rather than a row-by-row `DELETE` which causes table locking and vacuum issues.
+* **Archival** becomes a metadata operation (Detach Partition) rather than a row-by-row `DELETE` which causes table
+  locking and vacuum issues.
 
 #### Why JSONB for `changes`?
 
-Audit logs vary wildly in structure. An `invoice` change has different fields than a `user_profile` change. A rigid SQL schema would require hundreds of nullable columns or EAV (Entity-Attribute-Value) which is slow. PostgreSQL `JSONB` with **GIN Indexing** gives us the flexibility of NoSQL (MongoDB-like) with the ACID compliance of a relational DB.
+Audit logs vary wildly in structure. An `invoice` change has different fields than a `user_profile` change. A rigid SQL
+schema would require hundreds of nullable columns or EAV (Entity-Attribute-Value) which is slow. PostgreSQL `JSONB` with
+**GIN Indexing** gives us the flexibility of NoSQL (MongoDB-like) with the ACID compliance of a relational DB.
 
 ### License
 
