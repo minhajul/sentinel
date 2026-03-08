@@ -31,6 +31,10 @@ func (r *Repository) Close() error {
 }
 
 func (r *Repository) Save(ctx context.Context, event domain.AuditEvent) error {
+	if err := r.EnsurePartitionExists(ctx, event.Timestamp); err != nil {
+		return fmt.Errorf("ensuring partition exists: %w", err)
+	}
+
 	const query = `
        INSERT INTO audit_logs (
           event_id, timestamp, actor_id, action, 
