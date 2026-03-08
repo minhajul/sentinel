@@ -27,14 +27,13 @@ func main() {
 
 	defer repo.Close()
 
+	// Ensure partitions exist for current + next 2 months
 	now := time.Now()
-	nextMonth := now.AddDate(0, 1, 0)
-
-	if err := repo.EnsurePartitionExists(ctx, now); err != nil {
-		log.Printf("Warning: Failed to ensure current partition: %v", err)
-	}
-	if err := repo.EnsurePartitionExists(ctx, nextMonth); err != nil {
-		log.Printf("Warning: Failed to ensure next partition: %v", err)
+	for i := 0; i < 3; i++ {
+		t := now.AddDate(0, i, 0)
+		if err := repo.EnsurePartitionExists(ctx, t); err != nil {
+			log.Printf("Warning: Failed to ensure partition for %s: %v", t.Format("2006-01"), err)
+		}
 	}
 
 	consumer := kafka.NewConsumer(cfg.KafkaBrokers, cfg.KafkaTopic, cfg.KafkaGroupID)
