@@ -13,8 +13,3 @@ CREATE TABLE audit_logs
 
 -- Create a GIN index for fast JSON querying
 CREATE INDEX idx_audit_changes ON audit_logs USING GIN (changes);
-
--- Create initial partitions (e.g., for current month and next)
--- CREATE TABLE audit_logs_2026_01 PARTITION OF audit_logs
--- FOR VALUES FROM
--- ('2026-01-01') TO ('2026-02-01');
