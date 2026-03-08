@@ -33,6 +33,8 @@ func main() {
 		t := now.AddDate(0, i, 0)
 		if err := repo.EnsurePartitionExists(ctx, t); err != nil {
 			log.Printf("Warning: Failed to ensure partition for %s: %v", t.Format("2006-01"), err)
+		} else {
+			log.Printf("Partition ensured for %s", t.Format("2006-01"))
 		}
 	}
 
