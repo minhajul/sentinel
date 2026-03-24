@@ -20,6 +20,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -115,6 +116,9 @@ func main() {
 			"event_id": req.EventID.String(),
 		})
 	})
+
+	// Prometheus metrics endpoint
+	routing.Handle("/metrics", promhttp.Handler())
 
 	server := &http.Server{
 		Addr:    ":8080",

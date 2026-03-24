@@ -59,5 +59,13 @@ services:
       KAFKA_GROUP_ID: audit-group-1
       DB_DSN: postgres://user:password@postgres:5432/sentinel_db?sslmode=disable
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: sentinel_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./configs/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
 volumes:
   postgres_data:
