@@ -35,6 +35,10 @@ func LoadConfig() *Config {
 		log.Fatal("CRITICAL: DB_DSN environment variable is required")
 	}
 
+	if cfg.LokiURL == "" {
+		log.Println("WARNING: LOKI_URL not found, falling back to stdout only")
+	}
+
 	return cfg
 }
 

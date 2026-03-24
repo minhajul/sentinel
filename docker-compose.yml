@@ -25,7 +25,6 @@ services:
       - "3100:3100"
     command: -config.file=/etc/loki/local-config.yaml
 
-
   kafka:
     image: confluentinc/cp-kafka:7.4.0
     container_name: sentinel_kafka

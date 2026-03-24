@@ -18,15 +18,20 @@ func InitLogger(lokiURL string) {
 
 	if lokiURL != "" {
 		lokiConfig, err := loki.NewDefaultConfig(lokiURL + "/loki/api/v1/push")
-		if err == nil {
+		if err != nil {
+			slog.Error("Failed to create Loki config", "err", err, "url", lokiURL)
+		} else {
 			client, err := loki.New(lokiConfig)
-			if err == nil {
+			if err != nil {
+				slog.Error("Failed to create Loki client", "err", err)
+			} else {
 				lokiOption := slogloki.Option{
 					Level:  slog.LevelInfo,
 					Client: client,
 				}
 				lokiHandler := lokiOption.NewLokiHandler()
 				handler = slogmulti.Fanout(stdoutHandler, lokiHandler)
+				slog.Info("Loki logger initialized", "url", lokiURL)
 			}
 		}
 	}
