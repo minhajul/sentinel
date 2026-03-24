@@ -42,6 +42,7 @@ func main() {
 	routing.Use(middleware.Logger)
 	routing.Use(middleware.Recoverer)
 	routing.Use(middleware.Timeout(60 * time.Second))
+	routing.Use(middlewares.PrometheusMetrics)
 
 	eventsLimiter := middlewares.RateLimit(100, 1*time.Minute)
 
