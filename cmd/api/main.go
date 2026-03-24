@@ -62,7 +62,7 @@ func main() {
 	})
 
 	// Readiness probe endpoint
-	routing.Get("/health/ready", func(w http.ResponseWriter, r *http.Request) {
+	routing.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
 		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
