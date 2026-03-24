@@ -32,17 +32,6 @@ func InitLogger(lokiURL string, serviceName string) {
 				lokiHandler := lokiOption.NewLokiHandler()
 				handler = slogmulti.Fanout(stdoutHandler, lokiHandler)
 				slog.Info("Loki logger initialized", "url", lokiURL, "service", serviceName)
-
-				//lokiOption := slogloki.Option{
-				//	Level:  slog.LevelInfo,
-				//	Client: client,
-				//	Labels: map[string]string{
-				//		"service": serviceName,
-				//	},
-				//}
-				//lokiHandler := lokiOption.NewLokiHandler()
-				//handler = slogmulti.Fanout(stdoutHandler, lokiHandler)
-				//slog.Info("Loki logger initialized", "url", lokiURL, "service", serviceName)
 			}
 		}
 	}
