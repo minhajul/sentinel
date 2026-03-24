@@ -46,7 +46,7 @@ func (c *Consumer) Start(ctx context.Context, handler func(ctx context.Context, 
 		}
 
 		if err := handler(ctx, event); err != nil {
-			slog.Error("Handler failed", "err", err)
+			slog.Error("Handler failed", "err", err, "event_id", event.EventID)
 			continue
 		}
 

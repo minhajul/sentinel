@@ -26,7 +26,7 @@ import (
 
 func main() {
 	cfg := configs.LoadConfig()
-	logger.InitLogger(cfg.LokiURL)
+	logger.InitLogger(cfg.LokiURL, "sentinel-api")
 
 	producer := kafka.NewProducer(cfg.KafkaBrokers, "audit-logs")
 	defer producer.Close()

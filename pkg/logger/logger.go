@@ -9,7 +9,7 @@ import (
 	slogmulti "github.com/samber/slog-multi"
 )
 
-func InitLogger(lokiURL string) {
+func InitLogger(lokiURL string, serviceName string) {
 	stdoutHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	})
@@ -31,7 +31,18 @@ func InitLogger(lokiURL string) {
 				}
 				lokiHandler := lokiOption.NewLokiHandler()
 				handler = slogmulti.Fanout(stdoutHandler, lokiHandler)
-				slog.Info("Loki logger initialized", "url", lokiURL)
+				slog.Info("Loki logger initialized", "url", lokiURL, "service", serviceName)
+
+				//lokiOption := slogloki.Option{
+				//	Level:  slog.LevelInfo,
+				//	Client: client,
+				//	Labels: map[string]string{
+				//		"service": serviceName,
+				//	},
+				//}
+				//lokiHandler := lokiOption.NewLokiHandler()
+				//handler = slogmulti.Fanout(stdoutHandler, lokiHandler)
+				//slog.Info("Loki logger initialized", "url", lokiURL, "service", serviceName)
 			}
 		}
 	}

@@ -3,16 +3,20 @@ package main
 import (
 	"context"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"sentinel/configs"
 	postgres "sentinel/internal/adapters/postgresql"
+	"sentinel/internal/core/monitoring"
 	"sentinel/pkg/logger"
 	"syscall"
 	"time"
 
 	"sentinel/internal/adapters/kafka"
 	"sentinel/internal/core/domain"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -20,7 +24,16 @@ func main() {
 	defer stop()
 
 	cfg := configs.LoadConfig()
-	logger.InitLogger(cfg.LokiURL)
+	logger.InitLogger(cfg.LokiURL, "sentinel-consumer")
+
+	// Start metrics server
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		slog.Info("Metrics server listening on :2112")
+		if err := http.ListenAndServe(":2112", nil); err != nil {
+			slog.Error("Metrics server failed", "err", err)
+		}
+	}()
 
 	repo, err := postgres.NewRepository(cfg.DatabaseURL)
 	if err != nil {
@@ -45,8 +58,16 @@ func main() {
 	defer consumer.Close()
 
 	eventHandler := func(ctx context.Context, event domain.AuditEvent) error {
+		start := time.Now()
 		slog.Info("Saving event to DB...", "eventID", event.EventID)
-		return repo.Save(ctx, event)
+		err := repo.Save(ctx, event)
+		status := "success"
+		if err != nil {
+			status = "failure"
+		}
+		duration := time.Since(start).Seconds()
+		monitoring.ConsumerProcessingDuration.WithLabelValues(cfg.KafkaTopic, status).Observe(duration)
+		return err
 	}
 
 	slog.Info("Consumer starting...")
