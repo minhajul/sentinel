@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"sentinel/configs"
+	"sentinel/pkg/logger"
 	"syscall"
 	"time"
 
@@ -24,13 +25,15 @@ import (
 
 func main() {
 	cfg := configs.LoadConfig()
+	logger.InitLogger(cfg.LokiURL)
 
 	producer := kafka.NewProducer(cfg.KafkaBrokers, "audit-logs")
 	defer producer.Close()
 
 	db, err := postgres.NewConnection(cfg.DatabaseURL)
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("Failed to connect to DB", "err", err)
+		os.Exit(1)
 	}
 	defer db.Close()
 
@@ -104,7 +107,7 @@ func main() {
 		defer cancel()
 
 		if err := producer.Publish(ctx, req); err != nil {
-			log.Printf("Failed to publish event: %v", err)
+			slog.Error("Failed to publish event", "err", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
@@ -122,9 +125,10 @@ func main() {
 	}
 
 	go func() {
-		log.Println("API listening on port 8080...")
+		slog.Info("API listening on port 8080...")
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("Server error: %v", err)
+			slog.Error("Server error", "err", err)
+			os.Exit(1)
 		}
 	}()
 
@@ -132,7 +136,7 @@ func main() {
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	<-quit
 
-	log.Println("Shutting down API...")
+	slog.Info("Shutting down API...")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	_ = server.Shutdown(ctx)

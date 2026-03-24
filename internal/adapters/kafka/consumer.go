@@ -3,8 +3,7 @@ package kafka
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"log"
+	"log/slog"
 
 	"sentinel/internal/core/domain"
 
@@ -28,7 +27,7 @@ func NewConsumer(brokers []string, topic string, groupID string) *Consumer {
 }
 
 func (c *Consumer) Start(ctx context.Context, handler func(ctx context.Context, event domain.AuditEvent) error) error {
-	fmt.Println("Starting Kafka Consumer...")
+	slog.Info("Starting Kafka Consumer...")
 
 	for {
 		m, err := c.reader.FetchMessage(ctx)
@@ -36,23 +35,23 @@ func (c *Consumer) Start(ctx context.Context, handler func(ctx context.Context, 
 			if ctx.Err() != nil {
 				return nil
 			}
-			log.Printf("Error fetching message: %v\n", err)
+			slog.Error("Error fetching message", "err", err)
 			continue
 		}
 
 		var event domain.AuditEvent
 		if err := json.Unmarshal(m.Value, &event); err != nil {
-			log.Printf("Error unmarshalling event: %v\n", err)
+			slog.Error("Error unmarshalling event", "err", err)
 			continue
 		}
 
 		if err := handler(ctx, event); err != nil {
-			log.Printf("Handler failed: %v\n", err)
+			slog.Error("Handler failed", "err", err)
 			continue
 		}
 
 		if err := c.reader.CommitMessages(ctx, m); err != nil {
-			log.Printf("Failed to commit message: %v\n", err)
+			slog.Error("Failed to commit message", "err", err)
 		}
 	}
 }

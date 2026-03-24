@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"sentinel/configs"
 	postgres "sentinel/internal/adapters/postgresql"
+	"sentinel/pkg/logger"
 	"syscall"
 	"time"
 
@@ -19,10 +20,12 @@ func main() {
 	defer stop()
 
 	cfg := configs.LoadConfig()
+	logger.InitLogger(cfg.LokiURL)
 
 	repo, err := postgres.NewRepository(cfg.DatabaseURL)
 	if err != nil {
-		log.Fatalf("Could not connect to DB: %v", err)
+		slog.Error("Could not connect to DB", "err", err)
+		os.Exit(1)
 	}
 
 	defer repo.Close()
@@ -32,9 +35,9 @@ func main() {
 	for i := range 3 {
 		t := now.AddDate(0, i, 0)
 		if err := repo.EnsurePartitionExists(ctx, t); err != nil {
-			log.Printf("Warning: Failed to ensure partition for %s: %v", t.Format("2006-01"), err)
+			slog.Warn("Failed to ensure partition", "month", t.Format("2006-01"), "err", err)
 		} else {
-			log.Printf("Partition ensured for %s", t.Format("2006-01"))
+			slog.Info("Partition ensured", "month", t.Format("2006-01"))
 		}
 	}
 
@@ -42,12 +45,13 @@ func main() {
 	defer consumer.Close()
 
 	eventHandler := func(ctx context.Context, event domain.AuditEvent) error {
-		log.Printf("Saving event %s to DB...", event.EventID)
+		slog.Info("Saving event to DB...", "eventID", event.EventID)
 		return repo.Save(ctx, event)
 	}
 
-	log.Println("Consumer starting...")
+	slog.Info("Consumer starting...")
 	if err := consumer.Start(ctx, eventHandler); err != nil {
-		log.Fatalf("Consumer failed: %v", err)
+		slog.Error("Consumer failed", "err", err)
+		os.Exit(1)
 	}
 }

@@ -13,6 +13,7 @@ type Config struct {
 	KafkaBrokers []string
 	KafkaTopic   string
 	KafkaGroupID string
+	LokiURL      string
 }
 
 func LoadConfig() *Config {
@@ -26,6 +27,7 @@ func LoadConfig() *Config {
 		KafkaBrokers: []string{getEnv("KAFKA_BROKERS", "localhost:9092")},
 		KafkaTopic:   getEnv("KAFKA_TOPIC", "audit-logs"),
 		KafkaGroupID: getEnv("KAFKA_GROUP_ID", "audit-group-1"),
+		LokiURL:      getEnv("LOKI_URL", ""),
 	}
 
 	// Fail Fast: Validation
