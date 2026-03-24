@@ -12,6 +12,10 @@ import (
 
 	"sentinel/internal/adapters/kafka"
 	"sentinel/internal/core/domain"
+	"sentinel/internal/core/monitoring"
+
+	"net/http"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -42,9 +46,28 @@ func main() {
 	defer consumer.Close()
 
 	eventHandler := func(ctx context.Context, event domain.AuditEvent) error {
+		start := time.Now()
 		log.Printf("Saving event %s to DB...", event.EventID)
-		return repo.Save(ctx, event)
+		
+		err := repo.Save(ctx, event)
+		
+		status := "success"
+		if err != nil {
+			status = "error"
+		}
+		
+		monitoring.ConsumerProcessingDuration.WithLabelValues(cfg.KafkaTopic, status).Observe(time.Since(start).Seconds())
+		
+		return err
 	}
+
+	go func() {
+		log.Println("Starting metrics server on :2112...")
+		http.Handle("/metrics", promhttp.Handler())
+		if err := http.ListenAndServe(":2112", nil); err != nil && err != http.ErrServerClosed {
+			log.Printf("Metrics HTTP server failed: %v", err)
+		}
+	}()
 
 	log.Println("Consumer starting...")
 	if err := consumer.Start(ctx, eventHandler); err != nil {

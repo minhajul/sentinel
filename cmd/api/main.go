@@ -20,6 +20,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -41,6 +42,7 @@ func main() {
 	routing.Use(middleware.Logger)
 	routing.Use(middleware.Recoverer)
 	routing.Use(middleware.Timeout(60 * time.Second))
+	routing.Use(middlewares.PrometheusMetrics)
 
 	eventsLimiter := middlewares.RateLimit(100, 1*time.Minute)
 
@@ -115,6 +117,9 @@ func main() {
 			"event_id": req.EventID.String(),
 		})
 	})
+
+	// Prometheus metrics endpoint
+	routing.Handle("/metrics", promhttp.Handler())
 
 	server := &http.Server{
 		Addr:    ":8080",
