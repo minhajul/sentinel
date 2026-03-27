@@ -94,8 +94,9 @@ docker logs -f sentinel_consumer
 The infrastructure automatically spins up **Prometheus**, **Grafana**, and **Loki** alongside the application.
 
 * **Grafana (Dashboards & Logs):** [http://localhost:3000](http://localhost:3000) (Login: `admin` / `admin`)
-  * Access pre-configured dashboards and use the **Explore** tab to query centralized logs via Loki.
-* **Prometheus (Metrics):** [http://localhost:9090](http://localhost:9090) (Scrapes application and infrastructure metrics)
+    * Access pre-configured dashboards and use the **Explore** tab to query centralized logs via Loki.
+* **Prometheus (Metrics):** [http://localhost:9090](http://localhost:9090) (Scrapes application and infrastructure
+  metrics)
 * **Loki:** `http://localhost:3100` (Centralized log aggregation)
 
 ### Engineering Decisions (Why I did this?)
