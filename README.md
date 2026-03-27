@@ -23,7 +23,7 @@ persists them into a partitioned PostgreSQL database for efficient historical qu
 
 ### Tech Stack
 
-* **Language:** Go (Golang) 1.24
+* **Language:** Go (Golang) 1.25
 * **Streaming:** Apache Kafka & Zookeeper
 * **Database:** PostgreSQL 15 (with Range Partitioning)
 * **Infrastructure:** Docker & Docker Compose
