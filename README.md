@@ -27,6 +27,7 @@ persists them into a partitioned PostgreSQL database for efficient historical qu
 * **Streaming:** Apache Kafka & Zookeeper
 * **Database:** PostgreSQL 15 (with Range Partitioning)
 * **Infrastructure:** Docker & Docker Compose
+* **Observability:** Prometheus, Grafana, Loki
 * **Libraries:** `segmentio/kafka-go`, `lib/pq` (Pure Go drivers)
 
 ### Prerequisites
@@ -40,7 +41,7 @@ persists them into a partitioned PostgreSQL database for efficient historical qu
 git clone https://github.com/minhajul/sentinel.git
 cd sentinel
 
-# Start Kafka, Zookeeper, Postgres, API, and Consumer
+# Start Kafka, Zookeeper, Postgres, API, Consumer, Prometheus, Grafana, and Loki
 make build
 
 # OR
@@ -87,6 +88,15 @@ Check the logs to see the Consumer picking it up:
 ```bash
 docker logs -f sentinel_consumer
 ```
+
+### Observability & Monitoring
+
+The infrastructure automatically spins up **Prometheus**, **Grafana**, and **Loki** alongside the application.
+
+* **Grafana (Dashboards & Logs):** [http://localhost:3000](http://localhost:3000) (Login: `admin` / `admin`)
+  * Access pre-configured dashboards and use the **Explore** tab to query centralized logs via Loki.
+* **Prometheus (Metrics):** [http://localhost:9090](http://localhost:9090) (Scrapes application and infrastructure metrics)
+* **Loki:** `http://localhost:3100` (Centralized log aggregation)
 
 ### Engineering Decisions (Why I did this?)
 
