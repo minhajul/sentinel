@@ -125,4 +125,8 @@ schema would require hundreds of nullable columns or EAV (Entity-Attribute-Value
 
 ### License
 
-MIT
+This project is licensed under the MIT License.
+
+### Author
+
+Made with ❤️ by [Minhajul](https://github.com/minhajul)
