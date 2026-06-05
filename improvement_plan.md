@@ -3,36 +3,19 @@
 > Goal: turn Sentinel from a working single-node prototype into a **production-grade, multi-tenant, compliance-ready,
 multi-million-user** audit log service.
 
-The plan is organized into **6 sequential phases**. Each phase delivers an independently shippable improvement. Phases
-can be parallelized once the foundations (Phase 0) are in place.
-
 ---
 
 ## Phase 0 — Foundations (Week 1–2)
 
 *Make the codebase trustworthy before adding more features.*
 
-### 0.1 Add a Test Suite
-
-The repo currently has **zero tests**. This is the single biggest blocker for scaling safely.
-
-- [ ] Add `go test ./...` discipline: every package in `internal/` and `cmd/` should have at least one unit test.
-- [ ] Target: **≥70 % coverage** on `internal/core/**` and `internal/adapters/**`.
-
-### 0.2 Linting, Formatting, Pre-commit
-
-- [ ] Add `golangci-lint` with config: `govet`, `staticcheck`, `errcheck`, `gosec`, `gocritic`, `revive`, `gofmt`,
-  `gofumpt`, `misspell`.
-- [ ] Add a `Makefile` target `make lint`, `make test`, `make test-integration`, `make build-api`,
-  `make build-consumer`.
-
-### 0.3 Configuration Hardening
+### 0.1 Configuration Hardening
 
 `configs/config.go` is too thin for production.
 
 - [ ] Replace ad-hoc env parsing with a typed struct + `envconfig` or `viper` (validation, defaults, slices, durations).
 
-### 0.4 Security Baseline
+### 0.2 Security Baseline
 
 - [ ] Move DB password and Kafka credentials out of `docker-compose.yml` into `.env` / Docker secrets / k8s secrets.
 - [ ] Add `Content-Security-Policy`, `X-Content-Type-Options`, `Referrer-Policy` headers via a Chi middleware.
@@ -74,8 +57,7 @@ Fix:
 ### 1.3 Repository Hardening (`internal/adapters/postgresql/repository.go`)
 
 - [ ] **Stop calling `EnsurePartitionExists` per event** — this is an expensive DDL hit on the hot path. Move to:
-    - A background job in the consumer that ensures partitions for current + next 2 months at startup and on a daily
-      tick.
+    - A background job in the consumer that ensures partitions for current + next 2 months at startup and on a daily tick.
     - A separate CronJob in k8s for the same purpose.
 - [ ] Switch DB driver from `lib/pq` to **`jackc/pgx/v5`** (5–10× faster, native binary protocol, better batching via
   `CopyFrom`).
@@ -188,8 +170,6 @@ Replace Docker Compose for production:
   `kafka_producer_queue_depth` or RPS).
 - [ ] `StatefulSet` for Postgres (or use a managed service).
 - [ ] `StatefulSet` for Kafka (or use a managed service like MSK / Confluent Cloud).
-- [ ] PodDisruptionBudgets, NetworkPolicies, PodSecurityStandards (`restricted`).
-- [ ] Topology spread constraints across AZs.
 
 ### 4.2 Database Scale
 
