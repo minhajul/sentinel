@@ -32,11 +32,9 @@ The repo currently has **zero tests**. This is the single biggest blocker for sc
 *Make the pipeline lossless and fast enough for spikes.*
 
 ### 1.1 Producer Hardening (`internal/adapters/kafka/producer.go`)
-- [ ] Enable compression: `Compression: kafka.Snappy` (or `Zstd` for better ratio).
 - [ ] Enable idempotent producer (`RequiredAcks: kafka.RequireAll`, `Async: false` for the first hop or `Async: true` with a delivery-report channel).
 - [ ] Set `BatchSize`, `BatchBytes`, `BatchTimeout` from config.
 - [ ] Use a meaningful **partition key**: `actor_id` is okay, but consider `(tenant_id, actor_id)` for better locality.
-- [ ] Add a circuit breaker (`sony/gobreaker`) around the publish call to fail fast and protect the API under Kafka outage.
 
 ### 1.2 Consumer Hardening (`internal/adapters/kafka/consumer.go`)
 The current consumer:
@@ -130,14 +128,6 @@ All responses must be **paged** with opaque cursors (`{ts, event_id}` pairs) —
 - [ ] Provision Grafana dashboards via JSON files in `configs/grafana/dashboards/` (ingestion rate, consumer lag, DB performance, error budget burn).
 - [ ] Commit the dashboards to git — no manual clicks in the UI.
 
-### 3.5 Compliance & Data Governance
-- [ ] Add **WORM** guarantee: S3 Object Lock for archived Parquet + DB trigger (already partially done).
-- [ ] Add **retention policies** per tenant (e.g. hot 90 d, warm 1 y in S3, then delete).
-- [ ] Add **PII redaction** layer: configurable allow/deny list of fields in `changes`/`metadata` before persistence.
-- [ ] Add a **read-audit log**: every `GET` on `/v1/events` writes a meta-event into the same pipeline. "Who read the audit log?" is itself audited.
-- [ ] Add **GDPR right-to-erasure** by detaching a tenant's partitions and tombstoning the tenant id (avoiding row-level deletes in immutable storage).
-- [ ] Sign the release artifacts (cosign / SLSA provenance) so deploys themselves are auditable.
-
 ---
 
 ## Phase 4 — Horizontal Scale (Week 11–16)
@@ -153,32 +143,7 @@ Replace Docker Compose for production:
 - [ ] Topology spread constraints across AZs.
 
 ### 4.2 Database Scale
-- [ ] **Vertical first**: bump Postgres to a 16 vCPU / 64 GB instance, tune `shared_buffers`, `work_mem`, `effective_cache_size`, `wal_compression=zstd`.
-- [ ] Add a **read replica** for the query API; route writes to primary, reads to replica (use `pgxpool` with a read-only DSN).
-- [ ] Plan a **sharding path** when a single primary > 5 TB / 50 K writes/s:
-  - Shard by `tenant_id` (range or hash).
-  - Use **Citus** (if Postgres-compatible) or migrate to **CockroachDB** / **Vitess** / **Spanner**.
-  - Move older partitions to **ClickHouse** or **DuckDB-on-S3** for analytical queries (audit data is a perfect fit for columnar storage).
 - [ ] Add **connection pooler** (PgBouncer or `pgcat`) in front of Postgres to survive 10 K+ connections from many consumer replicas.
-
-### 4.3 Kafka Scale
-- [ ] Provision the topic with **N partitions** matching target consumer parallelism (e.g. 50 partitions → 50 consumer pods max).
-- [ ] Set `min.insync.replicas=2`, `replication.factor=3` for durability.
-- [ ] Use **tiered storage** (Confluent Tiered Storage / Warpstream) so the broker doesn't OOM on long retention.
-- [ ] Move from single-broker Zookeeper to **KRaft** (no Zookeeper) — the compose file still uses Zookeeper.
-
-### 4.4 Caching
-- [ ] Add **Redis** (or in-process LRU `ristretto`) for hot lookups: `GET /v1/actors/{id}/timeline?limit=20`.
-- [ ] Cache invalidation: TTL only (audit data is append-only → no invalidation needed).
-
-### 4.5 Geo / Multi-Region
-- [ ] **Active-passive** for v1: one region writes, others replicate via Kafka MirrorMaker 2 / Confluent Cluster Linking.
-- [ ] **Active-active** for v2: per-region topics, federated query layer.
-
-### 4.6 Cost Guardrails
-- [ ] Add a `cost.md` with projected $/M events at target scale.
-- [ ] Use **Zstd** compression on Kafka and **columnar Parquet** on S3 archives.
-- [ ] Implement **adaptive batching** in the consumer: bigger batches when lag is high, smaller when low (reduces DB pressure during steady state).
 
 ---
 
