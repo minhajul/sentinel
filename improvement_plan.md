@@ -5,7 +5,7 @@ multi-million-user** audit log service.
 
 ---
 
-## Phase 0 — Foundations (Week 1–2)
+## Phase 0 — Foundations
 
 *Make the codebase trustworthy before adding more features.*
 
@@ -22,7 +22,7 @@ multi-million-user** audit log service.
 
 ---
 
-## Phase 1 — Reliability & Throughput (Week 3–5)
+## Phase 1 — Reliability & Throughput
 
 *Make the pipeline lossless and fast enough for spikes.*
 
@@ -85,7 +85,7 @@ Fix:
 
 ---
 
-## Phase 2 — Query API & Multi-Tenancy (Week 6–8)
+## Phase 2 — Query API & Multi-Tenancy
 
 *Make the data actually queryable and safe to share.*
 
@@ -120,7 +120,7 @@ All responses must be **paged** with opaque cursors (`{ts, event_id}` pairs) —
 
 ---
 
-## Phase 3 — Observability & Compliance (Week 9–10)
+## Phase 3 — Observability & Compliance
 
 ### 3.1 Tracing
 
@@ -157,7 +157,7 @@ All responses must be **paged** with opaque cursors (`{ts, event_id}` pairs) —
 
 ---
 
-## Phase 4 — Horizontal Scale (Week 11–16)
+## Phase 4 — Horizontal Scale
 
 *Now the system is ready to be deployed at scale.*
 
