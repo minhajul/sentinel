@@ -23,7 +23,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	cfg := configs.LoadConfig()
+	cfg := configs.MustLoad()
 	logger.InitLogger(cfg.LokiURL, "sentinel-consumer")
 
 	// Start metrics server

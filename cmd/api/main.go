@@ -25,7 +25,7 @@ import (
 )
 
 func main() {
-	cfg := configs.LoadConfig()
+	cfg := configs.MustLoad()
 	logger.InitLogger(cfg.LokiURL, "sentinel-api")
 
 	producer := kafka.NewProducer(cfg.KafkaBrokers, "audit-logs")
@@ -40,6 +40,7 @@ func main() {
 
 	routing := chi.NewRouter()
 
+	routing.Use(middlewares.SecurityHeaders)
 	routing.Use(middleware.RequestID)
 	routing.Use(middleware.RealIP)
 	routing.Use(middleware.Logger)
