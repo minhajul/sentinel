@@ -5,6 +5,23 @@ multi-million-user** audit log service.
 
 ---
 
+## Phase 0 — Foundations
+
+*Make the codebase trustworthy before adding more features.*
+
+### 0.1 Configuration Hardening
+
+`configs/config.go` is too thin for production.
+
+- [X] Replace ad-hoc env parsing with a typed struct + `envconfig` or `viper` (validation, defaults, slices, durations).
+
+### 0.2 Security Baseline
+
+- [X] Move DB password and Kafka credentials out of `docker-compose.yml` into `.env` / Docker secrets / k8s secrets.
+- [X] Add `Content-Security-Policy`, `X-Content-Type-Options`, `Referrer-Policy` headers via a Chi middleware.
+
+---
+
 ## Phase 1 — Reliability & Throughput
 
 *Make the pipeline lossless and fast enough for spikes.*
